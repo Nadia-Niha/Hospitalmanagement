@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Management Portal</title>
+<style>
+body {
+    font-family: "Poppins", sans-serif;
+    background: url('https://images.unsplash.com/photo-1588776814546-ec4e3d9a0d91?auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+    min-height: 100vh;
+    margin: 0;
+    color: #2d3436;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+/* Containers */
+.container, .dashboard {
+    background: rgba(255,255,255,0.93);
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    padding: 25px;
+    width: 750px;
+    backdrop-filter: blur(5px);
+    margin: 25px 0;
+    overflow-y: auto;
+}
+
+h2 { color: #0984e3; text-align: center; margin-bottom: 20px; }
+h3 { color: #6c5ce7; margin-top: 25px; }
+
+input, select {
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #b2bec3;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+input:focus, select:focus { border-color: #0984e3; outline: none; }
+
+button {
+    width: 95%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg,#6c5ce7,#0984e3);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button:hover { background: linear-gradient(90deg,#0984e3,#74b9ff); }
+.logout-btn { background: #d63031 !important; }
+
+.toggle-link { color: #6c5ce7; cursor: pointer; text-decoration: underline; }
+.success { color: green; font-weight: bold; }
+.error { color: red; font-weight: bold; }
+
+.section-card {
+    background: #f5f6fa;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: 0.3s;
+}
+.section-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+th, td { padding: 12px; text-align: left; }
+th { background: #0984e3; color: white; }
+td { background: #ffffff; }
+td button { padding: 5px 10px; font-size: 0.9em; }
+
+.feature-list {
+    background: #eaf3ff;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+    line-height: 1.7em;
+}
+.feature-list ul { list-style-type: "💡 "; padding-left: 20px; }
+.reminder { color: #00b894; font-weight: bold; white-space: pre-line; margin-top: 15px; }
+.slot-badge {
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: white;
+    margin: 3px;
+    display: inline-block;
+}
+.available { background-color: #00b894; }
+.booked { background-color: #d63031; }
+</style>
+</head>
+<body>
+
+<!-- Registration -->
+<div class="container" id="registerBox">
+    <h2>🧾 Patient Registration</h2>
+    <input type="text" id="regName" placeholder="Full Name" required><br>
+    <input type="email" id="regEmail" placeholder="Email" required><br>
+    <input type="password" id="regPassword" placeholder="Password" required><br>
+    <input type="password" id="regConfirm" placeholder="Confirm Password" required><br>
+    <button onclick="register()">Register</button>
+    <p>Already have an account? <span class="toggle-link" onclick="showLogin()">Login here</span></p>
+    <p id="regMsg"></p>
+</div>
+
+<!-- Patient Login -->
+<div class="container" id="loginBox" style="display:none;">
+    <h2>🔐 Login Portal</h2>
+    <input type="email" id="loginEmail" placeholder="Email (Patient)"><br>
+    <input type="password" id="loginPassword" placeholder="Password"><br>
+    <button onclick="login()">Patient Login</button>
+    <p>Doctor? <span class="toggle-link" onclick="showDoctorLogin()">Login here</span></p>
+    <p id="loginMsg"></p>
+</div>
+
+<!-- Doctor Login -->
+<div class="container" id="doctorLoginBox" style="display:none;">
+    <h2>🩺 Doctor Login</h2>
+    <select id="doctorSelectLogin"></select><br>
+    <button onclick="loginDoctor()">Login as Doctor</button>
+</div>
+
+<!-- Patient Dashboard -->
+<div class="dashboard" id="patientDashboard" style="display:none;">
+    <div class="feature-list">
+        <h3>✨ Patient Features</h3>
+        <ul>
+            <li>Available slots are shown dynamically when booking.</li>
+            <li>Double booking is prevented automatically.</li>
+            <li>Cancellations instantly update the doctor’s schedule.</li>
+            <li>Upcoming appointments trigger smart reminders.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h3>🧠 Medical History</h3>
+        <table id="historyTable">
+            <tr><th>Date</th><th>Doctor</th><th>Diagnosis</th></tr>
+        </table>
+    </div>
+
+    <div class="section-card">
+        <h3>📅 Book an Appointment</h3>
+        <select id="doctorSelect"></select><br>
+        <select id="slotSelect"></select><br>
+        <button onclick="bookAppointment()">Book Appointment</button>
+        <p id="bookingMsg"></p>
+    </div>
+
+    <div class="section-card">
+        <h3>📋 Your Appointments</h3>
+        <table id="appointmentTable">
+            <tr><th>Date</th><th>Doctor</th><th>Status</th><th>Action</th></tr>
+        </table>
+        <p class="reminder" id="reminderMsg"></p>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<!-- Doctor Dashboard -->
+<div class="dashboard" id="doctorDashboard" style="display:none;">
+    <div class="section-card">
+        <h3>📘 Doctor’s Appointments</h3>
+        <table id="doctorAppointmentTable">
+            <tr><th>Patient</th><th>Date</th><th>Status</th><th>Action</th></tr>
+        </table>
+    </div>
+
+    <div class="section-card">
+        <h3>🟢 Available Slots</h3>
+        <div id="doctorAvailableSlots"></div>
+    </div>
+
+    <button class="logout-btn" onclick="logoutDoctor()">Logout</button>
+</div>
+
+<script>
+let loginAttempts = 0;
+let currentUser = null;
+let doctors = [
+    { name: "Dr. Karim", slots: ["2025-10-28 10:00", "2025-10-28 11:00", "2025-10-28 12:00"] },
+    { name: "Dr. Nahar", slots: ["2025-10-28 09:00", "2025-10-28 10:30", "2025-10-28 11:30"] }
+];
+
+// ---------------- Registration & Login ----------------
+function showLogin(){registerBox.style.display="none";doctorLoginBox.style.display="none";loginBox.style.display="block";}
+function showDoctorLogin(){
+    loginBox.style.display="none";doctorLoginBox.style.display="block";
+    doctorSelectLogin.innerHTML="<option value=''>Select Doctor</option>";
+    doctors.forEach(d=>doctorSelectLogin.innerHTML+=`<option value="${d.name}">${d.name}</option>`);
+}
+function register(){
+    const name=regName.value.trim(),email=regEmail.value.trim(),pass=regPassword.value,confirm=regConfirm.value,msg=regMsg;
+    if(!name||!email||!pass||!confirm)return msgError(msg,"⚠️ Please fill all fields!");
+    if(pass!==confirm)return msgError(msg,"❌ Passwords do not match!");
+    localStorage.setItem("patientName",name);
+    localStorage.setItem("patientEmail",email);
+    localStorage.setItem("patientPassword",pass);
+    localStorage.setItem("appointments",JSON.stringify([]));
+    msgSuccess(msg,"✅ Registration successful! You can now login.");
+}
+function login(){
+    const email=loginEmail.value.trim(),pass=loginPassword.value,msg=loginMsg;
+    const savedEmail=localStorage.getItem("patientEmail"),savedPass=localStorage.getItem("patientPassword");
+    if(loginAttempts>=5)return msgError(msg,"🚫 Too many invalid attempts.");
+    if(email===savedEmail && pass===savedPass){currentUser=localStorage.getItem("patientName");showPatientDashboard();}
+    else {loginAttempts++;msgError(msg,`❌ Invalid credentials! Attempts left: ${5-loginAttempts}`);}
+}
+function loginDoctor(){
+    const doctorName=doctorSelectLogin.value;if(!doctorName)return alert("Select a doctor");
+    currentUser=doctorName;showDoctorDashboard();
+}
+
+// ---------------- Patient Dashboard ----------------
+function showPatientDashboard(){
+    loginBox.style.display="none";registerBox.style.display="none";doctorLoginBox.style.display="none";patientDashboard.style.display="block";
+    const history=[{date:"2024-09-10",doctor:"Dr. Rahman",diagnosis:"Fever"},{date:"2025-02-05",doctor:"Dr. Sultana",diagnosis:"Allergy"}];
+    const table=historyTable;
+    table.innerHTML=`<tr><th>Date</th><th>Doctor</th><th>Diagnosis</th></tr>`;
+    history.forEach(h=>table.innerHTML+=`<tr><td>${h.date}</td><td>${h.doctor}</td><td>${h.diagnosis}</td></tr>`);
+    renderDoctorSelect();
+    loadAppointments();
+    updateReminders();
+    setInterval(()=>{populateSlots();loadAppointments();updateReminders();loadDoctorAppointments();},1000);
+}
+function renderDoctorSelect(){doctorSelect.innerHTML="<option value=''>Select Doctor</option>";doctors.forEach(d=>doctorSelect.innerHTML+=`<option value="${d.name}">${d.name}</option>`);doctorSelect.onchange=populateSlots;}
+function populateSlots(){
+    const doctorName=doctorSelect.value,slotSelect=document.getElementById("slotSelect");
+    slotSelect.innerHTML="<option value=''>Select Slot</option>";
+    if(!doctorName)return;
+    const doctor=doctors.find(d=>d.name===doctorName);
+    const booked=JSON.parse(localStorage.getItem("appointments")||"[]").map(a=>a.slot);
+    doctor.slots.forEach(slot=>{if(!booked.includes(slot))slotSelect.innerHTML+=`<option value="${slot}">${slot}</option>`;});
+}
+function bookAppointment(){
+    const doctorName=doctorSelect.value,slot=slotSelect.value,msg=bookingMsg;
+    if(!doctorName||!slot)return msgError(msg,"Select doctor and slot");
+    let appointments=JSON.parse(localStorage.getItem("appointments")||"[]");
+    if(appointments.some(a=>a.slot===slot))return msgError(msg,"Slot already booked!");
+    appointments.push({doctor:doctorName,slot:slot,status:"Upcoming",patient:currentUser});
+    localStorage.setItem("appointments",JSON.stringify(appointments));
+    msgSuccess(msg,"Appointment booked successfully!");
+    populateSlots();loadAppointments();updateReminders();
+}
+function loadAppointments(){
+    const appointments=JSON.parse(localStorage.getItem("appointments")||"[]");
+    const table=appointmentTable;
+    table.innerHTML=`<tr><th>Date</th><th>Doctor</th><th>Status</th><th>Action</th></tr>`;
+    appointments.forEach((a,i)=>{if(a.patient===currentUser){const cancelBtn=a.status==="Upcoming"?`<button onclick="cancel(${i})">Cancel</button>`:"";table.innerHTML+=`<tr><td>${a.slot}</td><td>${a.doctor}</td><td>${a.status}</td><td>${cancelBtn}</td></tr>`;}});
+}
+function cancel(i){
+    let appointments=JSON.parse(localStorage.getItem("appointments")||"[]");
+    appointments[i].status="Cancelled";
+    localStorage.setItem("appointments",JSON.stringify(appointments));
+    populateSlots();loadAppointments();updateReminders();
+}
+function updateReminders(){
+    const appointments=JSON.parse(localStorage.getItem("appointments")||"[]");
+    const now=new Date();let reminderText="";
+    appointments.forEach(a=>{if(a.status==="Upcoming"&&a.patient===currentUser){const diff=(new Date(a.slot)-now)/(1000*60*60*24);if(diff>=0&&diff<=1)reminderText+=`🔔 Reminder: Appointment with ${a.doctor} on ${a.slot}\n`;}} );
+    reminderMsg.textContent=reminderText||"No upcoming appointments soon.";
+}
+
+// ---------------- Doctor Dashboard ----------------
+function showDoctorDashboard(){
+    doctorLoginBox.style.display="none";patientDashboard.style.display="none";doctorDashboard.style.display="block";
+    loadDoctorAppointments();renderDoctorSlots();
+}
+function loadDoctorAppointments(name=currentUser){
+    const appointments=JSON.parse(localStorage.getItem("appointments")||"[]");
+    const table=doctorAppointmentTable;
+    table.innerHTML=`<tr><th>Patient</th><th>Date</th><th>Status</th><th>Action</th></tr>`;
+    appointments.forEach((a,i)=>{
+        if(a.doctor===name){
+            const completeBtn=a.status==="Upcoming"?`<button onclick="markComplete(${i})">Mark Completed</button>`:"";
+            table.innerHTML+=`<tr><td>${a.patient}</td><td>${a.slot}</td><td>${a.status}</td><td>${completeBtn}</td></tr>`;
+        }
+    });
+    renderDoctorSlots(name);
+}
+function markComplete(i){let appointments=JSON.parse(localStorage.getItem("appointments")||"[]");appointments[i].status="Completed";localStorage.setItem("appointments",JSON.stringify(appointments));renderDoctorSlots();}
+
+// ---------------- Doctor Slots ----------------
+function renderDoctorSlots(name=currentUser){
+    const container=document.getElementById("doctorAvailableSlots");
+    container.innerHTML="";
+    const doctor=doctors.find(d=>d.name===name);
+    if(!doctor) return;
+    const booked=JSON.parse(localStorage.getItem("appointments")||"[]").filter(a=>a.doctor===name).map(a=>a.slot);
+    doctor.slots.forEach(slot=>{
+        const span=document.createElement("span");
+        span.textContent=slot;
+        span.className="slot-badge "+(booked.includes(slot)?"booked":"available");
+        container.appendChild(span);
+    });
+}
+
+// ---------------- Logout & Messages ----------------
+function logout(){patientDashboard.style.display="none";loginBox.style.display="block";currentUser=null;bookingMsg.textContent="";}
+function logoutDoctor(){doctorDashboard.style.display="none";doctorLoginBox.style.display="block";currentUser=null;}
+function msgError(el,text){el.textContent=text;el.className="error";}
+function msgSuccess(el,text){el.textContent=text;el.className="success";}
+</script>
+</body>
+</html>
