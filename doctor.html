@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Management - Doctor Portal</title>
+<style>
+body {
+    font-family: "Poppins", sans-serif;
+    background: url('https://images.unsplash.com/photo-1583912268183-7b4b88c8c902?auto=format&fit=crop&w=1350&q=80') no-repeat center center/cover;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+}
+
+.container {
+    background: rgba(255,255,255,0.9);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    width: 450px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    backdrop-filter: blur(5px);
+}
+
+.dashboard {
+    display: none;
+    width: 700px;
+    background: rgba(255,255,255,0.95);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+h2 { color: #2d3436; }
+input {
+    width: 90%;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 8px;
+    border: 1px solid #b2bec3;
+}
+button {
+    width: 95%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #00cec9;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover { background: #81ecec; }
+.logout-btn {
+    background: #d63031;
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+th, td {
+    padding: 10px;
+    border: 1px solid #dfe6e9;
+}
+th {
+    background: #00cec9;
+    color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="loginBox">
+    <h2>Doctor Login</h2>
+    <input type="text" id="docUser" placeholder="Username" required><br>
+    <input type="password" id="docPass" placeholder="Password" required><br>
+    <button onclick="docLogin()">Login</button>
+    <p id="loginMsg"></p>
+</div>
+
+<div class="dashboard" id="docDashboard">
+    <h2>Welcome, <span id="docName"></span> 👨‍⚕️</h2>
+    <h3>Your Appointments</h3>
+    <table id="apptTable">
+        <tr><th>Patient</th><th>Date</th><th>Status</th><th>Action</th></tr>
+    </table>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<script>
+function docLogin() {
+    const user = docUser.value.trim();
+    const pass = docPass.value;
+    const msg = loginMsg;
+
+    if (user === "doctor" && pass === "12345") {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("docDashboard").style.display = "block";
+        document.getElementById("docName").textContent = "Dr. " + user;
+        loadAppointments();
+    } else {
+        msg.textContent = "❌ Invalid credentials!";
+        msg.style.color = "red";
+    }
+}
+
+function loadAppointments() {
+    const data = [
+        {patient: "Nadia Hoque", date: "2025-10-28", status: "Upcoming"},
+        {patient: "Aminul Karim", date: "2025
