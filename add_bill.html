@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add New Bill | Receptionist Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fc;
+      padding: 40px;
+    }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    form {
+      background: white;
+      max-width: 450px;
+      margin: 30px auto;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    select,
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    input[type="submit"] {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    input[type="submit"]:hover {
+      background-color: #2980b9;
+    }
+    .message {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .links {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .links a {
+      color: #3498db;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 0 10px;
+    }
+    .links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Add New Bill</h2>
+
+  <form id="billForm">
+    <label for="patient">Patient:</label>
+    <select id="patient" required>
+      <option value="">Select</option>
+    </select>
+
+    <label for="amount">Amount (BDT):</label>
+    <input type="number" id="amount" step="0.01" required>
+
+    <input type="submit" value="Create Bill">
+  </form>
+
+  <div class="message" id="message"></div>
+
+  <div class="links">
+    <a href="#">Back to Dashboard</a> | 
+    <a href="#">Logout</a>
+  </div>
+
+  <script>
+    // Simulated patient data (normally comes from a database)
+    const patients = [
+      { id: 1, name: "Ayesha Rahman" },
+      { id: 2, name: "Rafiul Karim" },
+      { id: 3, name: "Nadia Hoque" },
+    ];
+
+    // Populate dropdown
+    const patientSelect = document.getElementById("patient");
+    patients.forEach(patient => {
+      const option = document.createElement("option");
+      option.value = patient.id;
+      option.textContent = patient.name;
+      patientSelect.appendChild(option);
+    });
+
+    // Handle form submission
+    document.getElementById("billForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const patientId = document.getElementById("patient").value;
+      const amount = document.getElementById("amount").value;
+      const messageDiv = document.getElementById("message");
+
+      if (!patientId || !amount) {
+        messageDiv.style.color = "red";
+        messageDiv.textContent = "⚠️ Please fill all fields.";
+        return;
+      }
+
+      const billDate = new Date().toLocaleDateString();
+
+      // Simulate saving bill
+      messageDiv.style.color = "green";
+      messageDiv.textContent = `✅ Bill added successfully for Patient ID: ${patientId} | Amount: ৳${amount} | Date: ${billDate}`;
+
+      // Clear form
+      this.reset();
+    });
+  </script>
+</body>
+</html>
