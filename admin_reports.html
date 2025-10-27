@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Performance Reports | HMS Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI'; }
+    .card { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <h2 class="mb-3">📊 Hospital Performance Reports</h2>
+  <p>Generate detailed reports for hospital performance, including appointments, revenue, and patient activity.</p>
+
+  <!-- Date Range -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label for="startDate" class="form-label">Start Date</label>
+      <input type="date" id="startDate" class="form-control">
+    </div>
+    <div class="col-md-4">
+      <label for="endDate" class="form-label">End Date</label>
+      <input type="date" id="endDate" class="form-control">
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+      <button class="btn btn-primary w-100" id="generateReportBtn">Generate Report</button>
+    </div>
+  </div>
+
+  <!-- Report Summary -->
+  <div id="reportSection" style="display:none;">
+    <div class="row text-center mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm"><div class="card-body">
+          <h6>Total Appointments</h6>
+          <h3 id="appointmentsCount">0</h3>
+        </div></div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm"><div class="card-body">
+          <h6>Total Revenue ($)</h6>
+          <h3 id="revenueTotal">0</h3>
+        </div></div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm"><div class="card-body">
+          <h6>Active Patients</h6>
+          <h3 id="activePatients">0</h3>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5>Appointments Trend</h5>
+            <canvas id="appointmentChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5>Revenue Growth</h5>
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download Buttons -->
+    <div class="text-center mt-4">
+      <button class="btn btn-success me-2" id="downloadExcelBtn">⬇️ Download Excel</button>
+      <button class="btn btn-danger" id="downloadPDFBtn">⬇️ Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ctxApp = document.getElementById('appointmentChart');
+const ctxRev = document.getElementById('revenueChart');
+let appointmentChart, revenueChart;
+
+function randomData(n, min, max) {
+  return Array.from({length:n}, ()=>Math.floor(Math.random()*(max-min+1))+min);
+}
+
+document.getElementById('generateReportBtn').addEventListener('click', ()=>{
+  const start = document.getElementById('startDate').value;
+  const end = document.getElementById('endDate').value;
+  if(!start || !end) return alert("Please select both start and end date.");
+
+  // Simulate Data
+  const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const appointments = randomData(7,80,200);
+  const revenue = randomData(7,5000,20000);
+  const totalAppointments = appointments.reduce((a,b)=>a+b,0);
+  const totalRevenue = revenue.reduce((a,b)=>a+b,0);
+  const activePatients = Math.floor(Math.random() * (500 - 300) + 300);
+
+  document.getElementById('appointmentsCount').innerText = totalAppointments;
+  document.getElementById('revenueTotal').innerText = totalRevenue.toLocaleString();
+  document.getElementById('activePatients').innerText = activePatients;
+  document.getElementById('reportSection').style.display='block';
+
+  if(appointmentChart) appointmentChart.destroy();
+  if(revenueChart) revenueChart.destroy();
+
+  appointmentChart = new Chart(ctxApp, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Appointments', data:appointments, borderColor:'#3498db', backgroundColor:'rgba(52,152,219,0.2)', fill:true, tension:0.4 }]},
+    options:{ responsive:true }
+  });
+
+  revenueChart = new Chart(ctxRev, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Revenue ($)', data:revenue, backgroundColor:'rgba(46,204,113,0.7)', borderColor:'rgba(46,204,113,1)', borderWidth:1 }] },
+    options:{ responsive:true, scales:{ y:{ beginAtZero:true } } }
+  });
+
+  // Store for export
+  window.reportData = { start, end, labels, appointments, revenue, totalAppointments, totalRevenue, activePatients };
+});
+
+// Excel Export
+document.getElementById('downloadExcelBtn').addEventListener('click', ()=>{
+  if(!window.reportData) return alert("Please generate report first.");
+  const wb = XLSX.utils.book_new();
+  const wsData = [
+    ["Hospital Performance Report"],
+    [`Date Range: ${window.reportData.start} to ${window.reportData.end}`],
+    [],
+    ["Day","Appointments","Revenue ($)"]
+  ];
+  window.reportData.labels.forEach((label,i)=>{
+    wsData.push([label, window.reportData.appointments[i], window.reportData.revenue[i]]);
+  });
+  wsData.push([],["Total Appointments", window.reportData.totalAppointments],["Total Revenue", window.reportData.totalRevenue],["Active Patients", window.reportData.activePatients]);
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, "Report");
+  XLSX.writeFile(wb, "Hospital_Performance_Report.xlsx");
+});
+
+// PDF Export
+document.getElementById('downloadPDFBtn').addEventListener('click', ()=>{
+  if(!window.reportData) return alert("Please generate report first.");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text("🏥 Hospital Performance Report", 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Date Range: ${window.reportData.start} to ${window.reportData.end}`, 14, 22);
+
+  const rows = window.reportData.labels.map((label,i)=>[label, window.reportData.appointments[i], window.reportData.revenue[i]]);
+  doc.autoTable({
+    head: [['Day', 'Appointments', 'Revenue ($)']],
+    body: rows,
+    startY: 30
+  });
+
+  const y = doc.lastAutoTable.finalY + 10;
+  doc.text(`Total Appointments: ${window.reportData.totalAppointments}`, 14, y);
+  doc.text(`Total Revenue: $${window.reportData.totalRevenue}`, 14, y+6);
+  doc.text(`Active Patients: ${window.reportData.activePatients}`, 14, y+12);
+
+  doc.save("Hospital_Performance_Report.pdf");
+});
+</script>
+</body>
+</html>
